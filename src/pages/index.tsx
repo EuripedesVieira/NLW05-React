@@ -1,26 +1,103 @@
 import {GetStaticProps} from 'next';
+import Image from 'next/image';
 import { api } from '../services/api';
 import {format,parseISO} from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
+import { covnertDurationToTimeString } from '../utils/returnTimeString';
+import styles from './home.module.scss';
+import { HomeProps,Episode } from '../types/espisode';
+import Link from 'next/link';
 
 
-type Episode= {
-  id: string,
-  title:string,
-  members:string,
-  published_at:string
-}
 
-type HomeProps = {
-  episodes:Array<Episode>
-}
+export default function Home({allEpisodes,latestEpisodes}:HomeProps) {
+
+  const hendlerLatestEpisodes=()=>{
+    return latestEpisodes.map((episode:Episode,index:number)=>{
+      return(
+          <li key={episode.id}>
+            <Image width={192} height={192} objectFit="cover" 
+              src={episode.thumbnail} alt={episode.title}/>
+            <div className={styles.episodeDetails}>
+              <Link href={`episodes/${episode.id}`}>
+                <a>{episode.title}</a>
+              </Link>
+              <p>{episode.members}</p>
+              <span>{episode.publishedAt}</span>
+              <span>{episode.durationAsString}</span>
+            </div>
+            <button>
+              <img src="/play-green.svg" alt="tocar episódio"/>
+            </button>
+          </li>
+      )
+    })
+  }
 
 
-export default function Home(props:HomeProps) {
-  return (
-    <h1> {JSON.stringify(props.episodes)}</h1>
+  const handlerAllEpisodes= ()=>{
+    return allEpisodes.map((episode:Episode)=>{
+      return(
+          <tr key={episode.id}>
+            <td style={{width: 72}}>
+              <Image
+                width={120}
+                height={120}
+                src={episode.thumbnail}
+                alt={episode.title}
+                objectFit="cover"
+              />
+            </td>
+            <td>
+              <Link href={`episodes/${episode.id}`}>
+                <a>{episode.title}</a>
+              </Link>
+            </td>
+            <td>{episode.members}</td>
+            <td style={{width: 100}}>{episode.publishedAt}</td>
+            <td>{episode.durationAsString}</td>
+            <td>
+              <button>
+                <img src="/play-green.svg" alt="tocar episódio"/>
+              </button>
+            </td>
+          </tr>
+      )
+    })
+  }
+
+
+  return ( 
+    <div className={styles.homepage}>
+      <section className={styles.latestEpisodes}>
+        <h2>Últimos lançamentos</h2>
+        <ul>
+          {hendlerLatestEpisodes()}
+        </ul>
+      </section>
+      <section className={styles.allEpisodes}>
+        <h2>Todos episódios</h2>
+        <table cellSpacing={0}>
+          <thead>
+            <tr>
+              <th></th>
+              <th>Podcast</th>
+              <th>Integrantes</th>
+              <th>Data</th>
+              <th>Duração</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {handlerAllEpisodes()}
+          </tbody>
+        </table>
+      </section>
+    </div>
   )
 }
+
+
 
 export const getStaticProps:GetStaticProps = async ()=>{
   const {data} = await api.get('episodes',{
@@ -31,7 +108,7 @@ export const getStaticProps:GetStaticProps = async ()=>{
     }
   });
 
-  console.log(data);
+ 
   const episodes = data.map(episode=>{
     
     let {
@@ -47,6 +124,8 @@ export const getStaticProps:GetStaticProps = async ()=>{
       locale:ptBR
     });
 
+    let durationAsString = covnertDurationToTimeString(Number(duration));
+
     return {
       id,
       title,
@@ -54,15 +133,18 @@ export const getStaticProps:GetStaticProps = async ()=>{
       members,
       description,
       publishedAt,
-      duration,
+      durationAsString,
       url
     }    
   })
 
-  console.log(episodes);
+  const latestEpisodes = episodes.slice(0, 2);
+  const allEpisodes = episodes.slice(2, episodes.length);
+
   return {
     props:{
-      episodes
+      latestEpisodes,
+      allEpisodes
     },
     revalidate: 60*60*8
  }
