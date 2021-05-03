@@ -6,6 +6,7 @@ export type Episode={
   thumbnail:string,
   description:string,
   durationAsString:string,
+  duration:number,
   url:string
 
 

@@ -7,10 +7,16 @@ import { covnertDurationToTimeString } from '../utils/returnTimeString';
 import styles from './home.module.scss';
 import { HomeProps,Episode } from '../types/espisode';
 import Link from 'next/link';
-
+import { useContext } from 'react';
+import { PlayerContext } from '../contents/player/playerContext';
+import Head from 'next/head';
 
 
 export default function Home({allEpisodes,latestEpisodes}:HomeProps) {
+
+  const {playList} = useContext(PlayerContext);
+
+  const episodeList = [...latestEpisodes,...allEpisodes];
 
   const hendlerLatestEpisodes=()=>{
     return latestEpisodes.map((episode:Episode,index:number)=>{
@@ -26,7 +32,9 @@ export default function Home({allEpisodes,latestEpisodes}:HomeProps) {
               <span>{episode.publishedAt}</span>
               <span>{episode.durationAsString}</span>
             </div>
-            <button>
+            <button onClick={()=>{
+              playList(episodeList,index)
+            }}>
               <img src="/play-green.svg" alt="tocar episódio"/>
             </button>
           </li>
@@ -36,7 +44,7 @@ export default function Home({allEpisodes,latestEpisodes}:HomeProps) {
 
 
   const handlerAllEpisodes= ()=>{
-    return allEpisodes.map((episode:Episode)=>{
+    return allEpisodes.map((episode:Episode,index:number)=>{
       return(
           <tr key={episode.id}>
             <td style={{width: 72}}>
@@ -57,7 +65,9 @@ export default function Home({allEpisodes,latestEpisodes}:HomeProps) {
             <td style={{width: 100}}>{episode.publishedAt}</td>
             <td>{episode.durationAsString}</td>
             <td>
-              <button>
+              <button onClick={()=>{
+                playList(episodeList,index+latestEpisodes.length)
+              }}>
                 <img src="/play-green.svg" alt="tocar episódio"/>
               </button>
             </td>
@@ -69,6 +79,9 @@ export default function Home({allEpisodes,latestEpisodes}:HomeProps) {
 
   return ( 
     <div className={styles.homepage}>
+      <Head>
+        <title>Home | Podcastr</title>
+      </Head>
       <section className={styles.latestEpisodes}>
         <h2>Últimos lançamentos</h2>
         <ul>
@@ -134,7 +147,8 @@ export const getStaticProps:GetStaticProps = async ()=>{
       description,
       publishedAt,
       durationAsString,
-      url
+      url,
+      duration
     }    
   })
 
